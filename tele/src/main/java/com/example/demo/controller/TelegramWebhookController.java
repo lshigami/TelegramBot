@@ -40,8 +40,10 @@ public class TelegramWebhookController {
                 userService.makeUserJoined(userId);
                 return APIResponse.builder().code(200).message("Success").data(new SubscriptionResponse("true", 100L)).build();
             }
+            // Check if user is member of channel : Prevent case buff points for user already joined
             else if(telegramService.isUserMemberOfChannel(userId, channelId) ) {
                 return APIResponse.builder().code(201).message("User already joined").data(new SubscriptionResponse("false", 0L)).build();
+                //If user is not a member of channel
             }else {
                 return APIResponse.builder().code(202).message("User not joined").data(new SubscriptionResponse("false", 0L)).build();
             }
@@ -66,7 +68,8 @@ public class TelegramWebhookController {
     }
 
     @GetMapping("/channel/{id}")
-    public boolean isJoinedChannel(@PathVariable String id) {
-        return telegramService.isUserMemberOfChannel(id, "-1002232995211");
+    public APIResponse isJoinedChannel(@PathVariable String id) {
+        boolean isJoined = telegramService.isUserMemberOfChannel(id, "-1002232995211");
+        return APIResponse.builder().code(200).message(isJoined?"User is a member":"User is not a member").data(isJoined).build();
     }
 }
