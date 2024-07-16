@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.converter.UserConverter;
+import com.example.demo.dto.request.UserGroupRequest;
 import com.example.demo.dto.request.UserMemberRequest;
 import com.example.demo.dto.request.UserRequest;
 import com.example.demo.dto.response.APIResponse;
@@ -18,7 +19,6 @@ import java.util.List;
 public class TelegramWebhookController {
     @Autowired
     private TelegramService telegramService;
-
     @Autowired
     private UserService userService;
     @Autowired
@@ -26,19 +26,18 @@ public class TelegramWebhookController {
 
     @PostMapping("/telegram-webhook")
     public APIResponse handleUserJoinChannel(@RequestBody UserRequest userMemberRequest) {
-
         try {
             // Get user ID and channel ID
             String userId = userMemberRequest.getId();
-            String channelId = "-1002232995211"; // Channel ID
+            String channelId = "-1002188041826"; // Channel ID
             // Save user if not exists
             userService.save(userMemberRequest);
 
             // If user is member of channel and user status is UNJOINED, add 100 points
             if (telegramService.isUserMemberOfChannel(userId, channelId) && userService.isUnjoined(userId)) {
-                userService.addPoints(userId, 100L);
+                userService.addPoints(userId, 3000L);
                 userService.makeUserJoined(userId);
-                return APIResponse.builder().code(200).message("Success").data(new SubscriptionResponse("true", 100L)).build();
+                return APIResponse.builder().code(200).message("Success").data(new SubscriptionResponse("true", 3000L)).build();
             }
             // Check if user is member of channel : Prevent case buff points for user already joined
             else if(telegramService.isUserMemberOfChannel(userId, channelId) ) {
@@ -53,23 +52,25 @@ public class TelegramWebhookController {
             return APIResponse.builder().code(500).message("Internal Server Error").data(new SubscriptionResponse("false", 0L)).build();
         }
     }
-    @PostMapping("/users")
-    public APIResponse createUser(@RequestBody UserRequest userRequest) {
-        return userService.save(userRequest);
-    }
-
-    @GetMapping("/users")
-    public List<User> getUsers() {
-        return userService.findTop100UsersByOrderByPointsDesc();
-    }
-    @GetMapping("/users/{id}")
-    public Long getPoints(@PathVariable String id) {
-        return userService.getPoints(id);
-    }
 
     @GetMapping("/channel/{id}")
     public APIResponse isJoinedChannel(@PathVariable String id) {
-        boolean isJoined = telegramService.isUserMemberOfChannel(id, "-1002232995211");
+        boolean isJoined = telegramService.isUserMemberOfChannel(id, "-1002188041826");
         return APIResponse.builder().code(200).message(isJoined?"User is a member":"User is not a member").data(isJoined).build();
+    }
+
+    @PostMapping("/is_user_in_group")
+    public APIResponse isUserInGroup(@RequestBody UserGroupRequest userGroupRequest) {
+        boolean isJoined = userService.isUserInGroup(userGroupRequest.getId(), userGroupRequest.getGroup_id());
+        return APIResponse.builder().code(200).message(isJoined?"User is a member":"User is not a member").data(isJoined).build();
+    }
+
+    @PostMapping("/telegram-webhook-group")
+    public APIResponse handleUserJoinGroup(@RequestBody UserGroupRequest userMemberRequest) {
+        boolean isJoined = telegramService.isUserMemberOfGroup(userMemberRequest.getId(), userMemberRequest.getGroup_id());
+       if(isJoined) {
+           return APIResponse.builder().code(200).message("User had joined group").data(isJoined).build();
+       }
+        return APIResponse.builder().code(202).message("User not joined").data(isJoined).build();
     }
 }

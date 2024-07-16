@@ -36,6 +36,24 @@ public class TelegramService {
             return false;
         }
     }
+    public boolean isUserMemberOfGroup(String userId, String groupID) {
+        try {
+            String url = TELEGRAM_API_URL + botToken + "/getChatMember?chat_id=" + groupID + "&user_id=" + userId;
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode root = objectMapper.readTree(response.getBody());
+            if (root.path("result").path("status").equals("left")) {
+                System.out.println("User has left the channel");
+                return false;
+            }
+            String status = root.path("result").path("status").asText();
+            return "member".equals(status) || "administrator".equals(status) || "creator".equals(status);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public String typeOfUser(String userId, String channelId){
         try {
             String url = TELEGRAM_API_URL + botToken + "/getChatMember?chat_id=" + channelId + "&user_id=" + userId;

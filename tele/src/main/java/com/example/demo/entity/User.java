@@ -17,5 +17,6 @@ public class User {
     private String last_name;
     private String status;
     private Long points;
+    private String userGroups;
 }
 
